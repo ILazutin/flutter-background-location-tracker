@@ -28,6 +28,8 @@ class ForegroundChannel {
         'android_update_interval_msec':
             config.androidConfig.trackingInterval.inMilliseconds,
         'android_config_channel_name': config.androidConfig.channelName,
+        'android_config_notification_title':
+            config.androidConfig.notificationTitle,
         'android_config_notification_body':
             config.androidConfig.notificationBody,
         'android_config_notification_icon':
@@ -55,6 +57,7 @@ class ForegroundChannel {
     return _foregroundChannel.invokeMethod(
       'startTracking',
       {
+        'android_config_notification_title': config?.notificationTitle,
         'android_config_notification_body': config?.notificationBody,
         'android_config_notification_icon': config?.notificationIcon,
         'android_config_enable_notification_location_updates':

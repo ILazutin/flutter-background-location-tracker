@@ -15,6 +15,9 @@ class AndroidConfig {
   /// The name that will be used for the permanent notification channel.
   final String channelName;
 
+  ///The message title that will be shown in the permanent notification
+  final String notificationTitle;
+
   ///The message that will be shown in the permanent notification
   final String notificationBody;
 
@@ -41,6 +44,7 @@ class AndroidConfig {
 
   const AndroidConfig({
     this.channelName = 'Background Tracking',
+    this.notificationTitle = '',
     this.notificationBody = 'Background tracking active. Tap to open.',
     this.notificationIcon,
     this.enableNotificationLocationUpdates = false,
