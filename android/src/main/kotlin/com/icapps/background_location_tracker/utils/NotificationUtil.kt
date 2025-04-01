@@ -66,7 +66,7 @@ internal object NotificationUtil {
         val title = if (SharedPrefsUtil.isNotificationLocationUpdatesEnabled(context)) {
             String.format("Location Update: %s", DateFormat.getDateTimeInstance().format(Date()))
         } else {
-            context.getAppName()
+            SharedPrefsUtil.getNotificationTitle(context)
         }
 
         val text = if (SharedPrefsUtil.isNotificationLocationUpdatesEnabled(context)) {

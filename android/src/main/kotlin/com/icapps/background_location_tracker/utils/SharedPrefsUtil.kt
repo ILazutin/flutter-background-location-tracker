@@ -1,6 +1,7 @@
 package com.icapps.background_location_tracker.utils
 
 import android.content.Context
+import com.icapps.background_location_tracker.ext.getAppName
 
 internal object SharedPrefsUtil {
     private const val SHARED_PREFS_FILE_NAME = "background_location_tracker"
@@ -11,6 +12,7 @@ internal object SharedPrefsUtil {
     private const val KEY_TRACKING_INTERVAL = "background.location.tracker.manager.TRACKING_INTERVAL"
     private const val KEY_DISTANCE_FILTER = "background.location.tracker.manager.DISTANCE_FILTER"
 
+    private const val KEY_NOTIFICATION_TITLE = "background.location.tracker.manager.NOTIFICATION_TITLE"
     private const val KEY_NOTIFICATION_BODY = "background.location.tracker.manager.NOTIFICATION_BODY"
     private const val KEY_NOTIFICATION_ICON = "background.location.tracker.manager.NOTIFICATION_ICON"
     private const val KEY_NOTIFICATION_LOCATION_UPDATES_ENABLED = "background.location.tracker.manager.ENABLE_NOTIFICATION_LOCATION_UPDATES"
@@ -67,9 +69,10 @@ internal object SharedPrefsUtil {
     fun distanceFilter(ctx: Context) : Float = ctx.prefs().getFloat(KEY_DISTANCE_FILTER, 0.0f)
 
     //NotificationConfig
-    fun saveNotificationConfig(ctx: Context, notificationBody: String, notificationIcon: String?, cancelTrackingActionText: String, enableNotificationLocationUpdates: Boolean, enableCancelTrackingAction: Boolean) {
+    fun saveNotificationConfig(ctx: Context, notificationTitle: String, notificationBody: String, notificationIcon: String?, cancelTrackingActionText: String, enableNotificationLocationUpdates: Boolean, enableCancelTrackingAction: Boolean) {
         ctx.prefs()
                 .edit()
+                .putString(KEY_NOTIFICATION_TITLE, notificationTitle)
                 .putString(KEY_NOTIFICATION_BODY, notificationBody)
                 .putString(KEY_NOTIFICATION_ICON, notificationIcon)
                 .putString(KEY_CANCEL_TRACKING_ACTION_TEXT, cancelTrackingActionText)
@@ -77,6 +80,8 @@ internal object SharedPrefsUtil {
                 .putBoolean(KEY_CANCEL_TRACKING_ACTION_ENABLED, enableCancelTrackingAction)
                 .apply()
     }
+
+    fun getNotificationTitle(ctx: Context): String = ctx.prefs().getString(KEY_NOTIFICATION_TITLE, ctx.getAppName())!!
 
     fun getNotificationBody(ctx: Context): String = ctx.prefs().getString(KEY_NOTIFICATION_BODY, "Background tracking active. Tap to open.")!!
 

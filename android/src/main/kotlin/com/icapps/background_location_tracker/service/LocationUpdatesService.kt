@@ -12,6 +12,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -39,19 +41,9 @@ internal class LocationUpdatesService : Service() {
     private var changingConfiguration = false
 
     /**
-     * Contains parameters used by [com.google.android.gms.location.FusedLocationProviderApi].
+     * Provides access to the Location Provider API.
      */
-    private var locationRequest: LocationRequest? = null
-
-    /**
-     * Provides access to the Fused Location Provider API.
-     */
-    private var fusedLocationClient: FusedLocationProviderClient? = null
-
-    /**
-     * Callback for changes in location.
-     */
-    private var locationCallback: LocationCallback? = null
+    private var locationClient: LocationClient? = null
 
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -62,15 +54,8 @@ internal class LocationUpdatesService : Service() {
 
     override fun onCreate() {
         Logger.debug(TAG, "ON CREATE SERVICE")
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                super.onLocationResult(locationResult)
-                onNewLocation(locationResult.lastLocation)
-            }
-        }
+        locationClient = createLocationClient()
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "mijnmooiestraat:location_updates")
-        createLocationRequest()
         getLastLocation()
 
         if (SharedPrefsUtil.isTracking(this)) {
@@ -100,7 +85,7 @@ internal class LocationUpdatesService : Service() {
         changingConfiguration = true
     }
 
-    override fun onBind(intent: Intent): IBinder? {
+    override fun onBind(intent: Intent): IBinder {
         // Called when a client (MainActivity in case of this sample) comes to the foreground
         // and binds with this service. The service should cease to be a foreground service
         // when that happens.
@@ -177,10 +162,25 @@ internal class LocationUpdatesService : Service() {
         } else {
             startService(Intent(applicationContext, LocationUpdatesService::class.java))
         }
-        val locationRequest = locationRequest ?: return
-        val locationCallback = locationCallback ?: return
+        val successCallback = object : LocationChangedCallback {
+            override fun onLocationChanged(position: Location?) {
+                onNewLocation(position)
+            }
+        }
+        val errorCallback = object : ErrorCallback {
+            override fun onError(context: Context, e: Exception) {
+                if (e !is SecurityException) {
+                    return
+                }
+                if (wakeLock?.isHeld == true) {
+                    wakeLock?.release()
+                }
+                SharedPrefsUtil.saveIsTracking(context, false)
+                Logger.error(TAG, "Lost location permission. Could not request updates. $e")
+            }
+        }
         try {
-            fusedLocationClient?.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+            locationClient?.startLocationUpdates(successCallback, errorCallback)
         } catch (unlikely: SecurityException) {
             if (wakeLock?.isHeld == true) {
                 wakeLock?.release()
@@ -199,9 +199,8 @@ internal class LocationUpdatesService : Service() {
             wakeLock?.release();
         }
         Logger.debug(TAG, "Removing location updates")
-        val locationCallback = locationCallback ?: return
         try {
-            fusedLocationClient?.removeLocationUpdates(locationCallback)
+            locationClient?.stopLocationUpdates()
             SharedPrefsUtil.saveIsTracking(this, false)
             stopSelf()
         } catch (unlikely: SecurityException) {
@@ -210,15 +209,42 @@ internal class LocationUpdatesService : Service() {
         }
     }
 
+    private fun createLocationClient(): LocationClient {
+        return if (isGooglePlayServicesAvailable()) {
+            FusedLocationClient(this)
+        } else {
+            LocationManagerClient(this)
+        }
+    }
+
+    private fun isGooglePlayServicesAvailable(): Boolean {
+        try {
+            val googleApiAvailability = GoogleApiAvailability.getInstance()
+            val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
+            return resultCode == ConnectionResult.SUCCESS
+        } // If the Google API class is not available conclude that the play services
+        // are unavailable. This might happen when the GMS package has been excluded by
+        // the app developer due to its proprietary license.
+        catch (e: NoClassDefFoundError) {
+            return false
+        }
+    }
+
     private fun getLastLocation() {
         try {
-            fusedLocationClient?.lastLocation?.addOnCompleteListener { task ->
-                if (task.isSuccessful && task.result != null) {
-                    location = task.result
-                } else {
+            val successCallback = object : LocationChangedCallback {
+                override fun onLocationChanged(position: Location?) {
+                    if (position != null) {
+                        location = position
+                    }
+                }
+            }
+            val errorCallback = object : ErrorCallback {
+                override fun onError(context: Context, e: Exception) {
                     Logger.warning(TAG, "Failed to get location.")
                 }
             }
+            locationClient?.getLastLocation(successCallback, errorCallback)
         } catch (unlikely: SecurityException) {
             Logger.error(TAG, "Lost location permission.$unlikely")
         }
@@ -240,19 +266,6 @@ internal class LocationUpdatesService : Service() {
             intent.putExtra(EXTRA_LOCATION, location)
             LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         }
-    }
-
-    /**
-     * Sets the location request parameters.
-     */
-    private fun createLocationRequest() {
-        val interval = SharedPrefsUtil.trackingInterval(this)
-        val distanceFilter = SharedPrefsUtil.distanceFilter(this)
-        locationRequest = LocationRequest.create()
-            .setInterval(interval)
-            .setFastestInterval(interval / 2)
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setSmallestDisplacement(distanceFilter)
     }
 
     /**
