@@ -21,10 +21,10 @@ public class ForegroundChannel : NSObject {
     private var isTracking = false
     private static let FOREGROUND_CHANNEL_NAME = "com.icapps.background_location_tracker/foreground_channel"
     
-    private let locationManager = LocationManager.shared()
+    private var locationManager = LocationManager.shared()
     
     private let userDefaults = UserDefaults.standard
-    
+  
     public static func getMethodChannel(with registrar: FlutterPluginRegistrar) -> FlutterMethodChannel {
         return FlutterMethodChannel(name: FOREGROUND_CHANNEL_NAME, binaryMessenger: registrar.messenger())
     }
@@ -36,7 +36,7 @@ public class ForegroundChannel : NSObject {
         case ForegroundMethods.isTracking.rawValue:
             isTracking(result)
         case ForegroundMethods.startTracking.rawValue:
-            startTracking(result)
+          startTracking(call: call, result:result)
         case ForegroundMethods.stopTracking.rawValue:
             stopTracking(result)
         default:
@@ -91,12 +91,46 @@ public class ForegroundChannel : NSObject {
         result(true)
     }
     
-    private func startTracking(_ result: @escaping FlutterResult) {
-        locationManager.startUpdatingLocation()
-        isTracking = true
-        SharedPrefsUtil.saveIsTracking(isTracking)
-        result(true)
+  private func startTracking(
+    call: FlutterMethodCall,
+    result: @escaping FlutterResult
+  ) {
+    let activityTypeKey = "ios_activity_type"
+    let distanceFilterKey = "ios_distance_filter"
+    let restartAfterKillKey = "ios_restart_after_kill"
+    let map = call.arguments as? [String: Any]
+    
+    SharedPrefsUtil.saveRestartAfterKillEnabled(map?[restartAfterKillKey] as? Bool ?? false)
+    
+    let activityType: CLActivityType
+    switch (map?[activityTypeKey] as? String ?? "AUTOMOTIVE") {
+    case "OTHER":
+        activityType = .other
+    case "FITNESS":
+        activityType = .fitness
+    case "NAVIGATION":
+        activityType = .otherNavigation
+    case "AIRBORNE":
+        if #available(iOS 12.0, *) {
+            activityType = .airborne
+        } else {
+            activityType = .automotiveNavigation
+        }
+    case "AUTOMOTIVE":
+        activityType = .automotiveNavigation
+    default:
+        activityType = .automotiveNavigation
     }
+    
+    SharedPrefsUtil.saveActivityType(activityType)
+    SharedPrefsUtil.saveDistanceFilter(map?[distanceFilterKey] as? Double ?? kCLDistanceFilterNone)
+    
+    locationManager = LocationManager.shared()
+    locationManager.startUpdatingLocation()
+    isTracking = true
+    SharedPrefsUtil.saveIsTracking(isTracking)
+    result(true)
+  }
     
     private func stopTracking(_ result: @escaping FlutterResult) {
         locationManager.stopUpdatingLocation()

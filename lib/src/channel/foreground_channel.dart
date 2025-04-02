@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:background_location_tracker/src/model/config/android_config.dart';
 import 'package:background_location_tracker/src/model/config/background_location_tracker_config.dart';
 import 'package:background_location_tracker/src/model/config/ios_config.dart';
 import 'package:flutter/services.dart';
@@ -53,19 +52,27 @@ class ForegroundChannel {
     return result == true;
   }
 
-  static Future<void> startTracking({AndroidConfig? config}) {
+  static Future<void> startTracking({BackgroundLocationTrackerConfig? config}) {
     return _foregroundChannel.invokeMethod(
       'startTracking',
       {
-        'android_config_notification_title': config?.notificationTitle,
-        'android_config_notification_body': config?.notificationBody,
-        'android_config_notification_icon': config?.notificationIcon,
+        'android_config_notification_title':
+            config?.androidConfig.notificationTitle,
+        'android_config_notification_body':
+            config?.androidConfig.notificationBody,
+        'android_config_notification_icon':
+            config?.androidConfig.notificationIcon,
         'android_config_enable_notification_location_updates':
-            config?.enableNotificationLocationUpdates,
+            config?.androidConfig.enableNotificationLocationUpdates,
         'android_config_cancel_tracking_action_text':
-            config?.cancelTrackingActionText,
+            config?.androidConfig.cancelTrackingActionText,
         'android_config_enable_cancel_tracking_action':
-            config?.enableCancelTrackingAction,
+            config?.androidConfig.enableCancelTrackingAction,
+        if (config?.iOSConfig.activityType != null)
+          'ios_activity_type':
+              _activityTypeString(config!.iOSConfig.activityType),
+        'ios_distance_filter': config?.iOSConfig.distanceFilterMeters,
+        'ios_restart_after_kill': config?.iOSConfig.restartAfterKill,
       },
     );
   }

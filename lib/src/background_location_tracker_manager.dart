@@ -18,7 +18,7 @@ class BackgroundLocationTrackerManager {
 
   static Future<bool> isTracking() async => ForegroundChannel.isTracking();
 
-  static Future<void> startTracking({AndroidConfig? config}) async =>
+  static Future<void> startTracking({BackgroundLocationTrackerConfig? config}) async =>
       ForegroundChannel.startTracking(config: config);
 
   static Future<void> stopTracking() async => ForegroundChannel.stopTracking();
