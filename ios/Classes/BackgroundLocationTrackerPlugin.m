@@ -16,7 +16,6 @@
 
 + (void)setPluginRegistrantCallback:(FlutterPluginRegistrantCallback)callback {
     [SwiftBackgroundLocationTrackerPlugin setPluginRegistrantCallback:callback];
-  [SwiftBackgroundLocationTrackerPlugin handleApplicationRun];
 }
 
 @end
