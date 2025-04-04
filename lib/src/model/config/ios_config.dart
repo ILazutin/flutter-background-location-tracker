@@ -14,12 +14,18 @@ class IOSConfig {
   /// after it has been killed by the user. Defaults to false
   final bool restartAfterKill;
 
+  /// The interval in which location updates are requested to be delivered.
+  /// This is a request to the system, not a guarantee
+  /// Defaults to an update every 10 seconds
+  final Duration trackingInterval;
+
   /// The distance in meters that should be moved before updates are sent.
   /// Defaults to no filter (null)
   final int? distanceFilterMeters;
 
   const IOSConfig({
     this.activityType = ActivityType.AUTOMOTIVE,
+    this.trackingInterval = const Duration(seconds: 10),
     this.distanceFilterMeters,
     this.restartAfterKill = false,
   });

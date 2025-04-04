@@ -16,7 +16,8 @@ struct SharedPrefsUtil {
     private static let KEY_LOGGING_ENABLED = "background.location.tracker.manager.LOGGIN_ENABLED"
     private static let KEY_DISTANCE_FILTER = "background.location.tracker.manager.DISTANCE_FILTER"
     private static let KEY_ACTIVITY_TYPE = "background.location.tracker.manager.KEY_ACTIVITY_TYPE"
-    
+    private static let KEY_TRACKING_INTERVAL = "background.location.tracker.manager.TRACKING_INTERVAL"
+
     private static let userDefaults = UserDefaults(suiteName: "\(SwiftBackgroundLocationTrackerPlugin.identifier).userDefaults")!
     
     static func saveCallBackDispatcherHandleKey(callBackHandle: Int64?) {
@@ -54,7 +55,11 @@ struct SharedPrefsUtil {
     static func saveDistanceFilter(_ distanceFilter: CLLocationDistance) {
         store(distanceFilter, key: SharedPrefsUtil.KEY_DISTANCE_FILTER)
     }
-    
+
+    static func saveTrackingInterval(_ interval: Double) {
+        store(interval, key: SharedPrefsUtil.KEY_TRACKING_INTERVAL)
+    }
+
     static func saveActivityType(_ activityType: CLActivityType) {
         store(activityType.rawValue, key: SharedPrefsUtil.KEY_ACTIVITY_TYPE)
     }
@@ -66,7 +71,11 @@ struct SharedPrefsUtil {
     static func distanceFilter() -> CLLocationDistance {
         return getValue(for: SharedPrefsUtil.KEY_DISTANCE_FILTER) ?? kCLDistanceFilterNone
     }
-    
+
+    static func trackingInterval() -> Double {
+        return getValue(for: SharedPrefsUtil.KEY_TRACKING_INTERVAL) ?? 10
+    }
+
     static func activityType() -> CLActivityType {
         guard let rawValue: Int = getValue(for: SharedPrefsUtil.KEY_ACTIVITY_TYPE) else { return CLActivityType.other }
         

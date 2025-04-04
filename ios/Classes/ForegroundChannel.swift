@@ -29,7 +29,7 @@ public class ForegroundChannel : NSObject {
         return FlutterMethodChannel(name: FOREGROUND_CHANNEL_NAME, binaryMessenger: registrar.messenger())
     }
     
-    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    @MainActor public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case ForegroundMethods.initialize.rawValue:
             initialize(call: call, result: result)
@@ -51,6 +51,7 @@ public class ForegroundChannel : NSObject {
         let loggingEnabledKey = "logging_enabled"
         let activityTypeKey = "ios_activity_type"
         let distanceFilterKey = "ios_distance_filter"
+        let trakingIntervalKey = "ios_update_interval_msec"
         let restartAfterKillKey = "ios_restart_after_kill"
         let map = call.arguments as? [String: Any]
         guard let callbackDispatcherHandle = map?[callBackHandleKey] else {
@@ -85,17 +86,19 @@ public class ForegroundChannel : NSObject {
         
         SharedPrefsUtil.saveActivityType(activityType)
         SharedPrefsUtil.saveDistanceFilter(map?[distanceFilterKey] as? Double ?? kCLDistanceFilterNone)
+        SharedPrefsUtil.saveTrackingInterval(map?[trakingIntervalKey] as? Double ?? 10)
         
         SharedPrefsUtil.saveCallBackDispatcherHandleKey(callBackHandle: callbackDispatcherHandle as? Int64)
         SharedPrefsUtil.saveIsTracking(isTracking)
         result(true)
     }
     
-  private func startTracking(
+  @MainActor private func startTracking(
     call: FlutterMethodCall,
     result: @escaping FlutterResult
   ) {
     let activityTypeKey = "ios_activity_type"
+    let trakingIntervalKey = "ios_update_interval_msec"
     let distanceFilterKey = "ios_distance_filter"
     let restartAfterKillKey = "ios_restart_after_kill"
     let map = call.arguments as? [String: Any]
@@ -124,16 +127,30 @@ public class ForegroundChannel : NSObject {
     
     SharedPrefsUtil.saveActivityType(activityType)
     SharedPrefsUtil.saveDistanceFilter(map?[distanceFilterKey] as? Double ?? kCLDistanceFilterNone)
+    SharedPrefsUtil.saveTrackingInterval(map?[trakingIntervalKey] as? Double ?? 10_000)
     
-    locationManager = LocationManager.shared()
-    locationManager.startUpdatingLocation()
+    if #available(iOS 17.0, *) {
+      let locationsHandler = LocationsHandler.shared
+      locationsHandler.startLocationUpdates(callback: {location in
+        SwiftBackgroundLocationTrackerPlugin.sendLocationLiveUpdate(location: location)
+      })
+    } else {
+      locationManager = LocationManager.shared()
+      locationManager.startUpdatingLocation()
+    }
     isTracking = true
     SharedPrefsUtil.saveIsTracking(isTracking)
     result(true)
   }
     
-    private func stopTracking(_ result: @escaping FlutterResult) {
+    @MainActor private func stopTracking(_ result: @escaping FlutterResult) {
+      if #available(iOS 17.0, *) {
+        let locationsHandler = LocationsHandler.shared
+        locationsHandler.stopLocationUpdates()
+      } else {
         locationManager.stopUpdatingLocation()
+      }
+        
         isTracking = false
         SharedPrefsUtil.saveIsTracking(isTracking)
         result(true)

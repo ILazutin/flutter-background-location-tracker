@@ -56,6 +56,9 @@ class ForegroundChannel {
     return _foregroundChannel.invokeMethod(
       'startTracking',
       {
+        'android_update_interval_msec':
+            config?.androidConfig.trackingInterval.inMilliseconds,
+        'android_distance_filter': config?.androidConfig.distanceFilterMeters,
         'android_config_notification_title':
             config?.androidConfig.notificationTitle,
         'android_config_notification_body':
@@ -72,6 +75,7 @@ class ForegroundChannel {
           'ios_activity_type':
               _activityTypeString(config!.iOSConfig.activityType),
         'ios_distance_filter': config?.iOSConfig.distanceFilterMeters,
+        'ios_update_interval_msec': config?.iOSConfig.trackingInterval.inSeconds,
         'ios_restart_after_kill': config?.iOSConfig.restartAfterKill,
       },
     );
