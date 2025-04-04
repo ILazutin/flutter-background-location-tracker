@@ -87,7 +87,7 @@ class LocationManagerClient(
 
         val builder = LocationRequestCompat.Builder(interval)
         builder.setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY)
-        builder.setMinUpdateIntervalMillis(interval / 2)
+        builder.setMinUpdateIntervalMillis(interval)
         builder.setMinUpdateDistanceMeters(distanceFilter)
 
         return builder.build()
