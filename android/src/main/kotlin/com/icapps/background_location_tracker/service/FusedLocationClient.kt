@@ -74,7 +74,7 @@ class FusedLocationClient(
 
         val builder = LocationRequest.Builder(interval)
         builder.setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-//        builder.setMinUpdateIntervalMillis(interval / 2)
+        builder.setMinUpdateIntervalMillis(interval)
         builder.setMinUpdateDistanceMeters(distanceFilter)
 
         return builder.build()
@@ -88,7 +88,7 @@ class FusedLocationClient(
         val distanceFilter = SharedPrefsUtil.distanceFilter(context)
 
         locationRequest.setInterval(interval)
-        locationRequest.setFastestInterval(interval / 2)
+        locationRequest.setFastestInterval(interval)
         locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY)
         locationRequest.setSmallestDisplacement(distanceFilter)
 

@@ -90,6 +90,10 @@ internal class MethodCallHelper(private val ctx: Context) : MethodChannel.Method
         val enableCancelTrackingActionKey = "android_config_enable_cancel_tracking_action"
         val cancelTrackingActionTextKey = "android_config_cancel_tracking_action_text"
 
+        val loggingEnabledKey = "logging_enabled"
+        val trackingIntervalKey = "android_update_interval_msec"
+        val distanceFilterKey = "android_distance_filter"
+
         val notificationTitle = call.argument<String>(notificationTitleKey)
         val notificationBody = call.argument<String>(notificationBodyKey)
         val notificationIcon = call.argument<String>(notificationIconKey)
@@ -106,6 +110,17 @@ internal class MethodCallHelper(private val ctx: Context) : MethodChannel.Method
                                                    enableNotificationLocationUpdates ?: SharedPrefsUtil.isNotificationLocationUpdatesEnabled(ctx),
                                                    enableCancelTrackingAction ?: SharedPrefsUtil.isCancelTrackingActionEnabled(ctx))
         }
+
+        call.argument<Boolean>(loggingEnabledKey)?.also {
+            SharedPrefsUtil.saveLoggingEnabled(ctx, it)
+        }
+        getLongArgumentByKey(call, trackingIntervalKey)?.also {
+            SharedPrefsUtil.saveTrackingInterval(ctx, it)
+        }
+        (call.argument<Double>(distanceFilterKey))?.also {
+            SharedPrefsUtil.saveDistanceFilter(ctx, it.toFloat())
+        }
+
         serviceConnection.service?.startTracking()
         result.success(true)
     }
