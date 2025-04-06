@@ -52,7 +52,7 @@ import CoreLocation
         CustomLogger
             .log(message: "handle LocationsHandler.startLocationUpdates")
         if self.manager.authorizationStatus == .notDetermined {
-            self.manager.requestAlwaysAuthorization()
+            self.manager.requestWhenInUseAuthorization()
         }
         self.trackingInterval = SharedPrefsUtil.trackingInterval()
         self.distanceFilter = SharedPrefsUtil.distanceFilter()
