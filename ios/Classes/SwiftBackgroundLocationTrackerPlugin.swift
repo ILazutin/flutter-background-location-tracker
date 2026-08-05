@@ -44,8 +44,16 @@ extension SwiftBackgroundLocationTrackerPlugin: @preconcurrency FlutterPlugin {
         if !(SharedPrefsUtil.isTracking() && SharedPrefsUtil.restartAfterKill()) {
             return
         }
+      
+        if (instance.locationManager.authorizationStatus != .authorizedAlways) {
+          return
+        }
+      
+        instance.locationManager.startMonitoringSignificantLocationChanges()
+      
         if #available(iOS 17.0, *) {
             let locationsHandler = LocationsHandler.shared
+          
             locationsHandler.startLocationUpdates(callback: {location in
               sendLocationLiveUpdate(location: location)
             })

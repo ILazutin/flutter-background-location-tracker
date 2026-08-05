@@ -16,8 +16,7 @@ class LocationManager {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = SharedPrefsUtil.distanceFilter()
         manager.pausesLocationUpdatesAutomatically = false
-        manager.requestAlwaysAuthorization()
-        manager.startMonitoringSignificantLocationChanges()
+//        manager.startMonitoringSignificantLocationChanges()
         if #available(iOS 11, *) {
             manager.showsBackgroundLocationIndicator = true
         }

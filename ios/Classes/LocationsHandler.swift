@@ -52,11 +52,13 @@ import CoreLocation
         CustomLogger
             .log(message: "handle LocationsHandler.startLocationUpdates")
         if self.manager.authorizationStatus == .notDetermined {
-            self.manager.requestWhenInUseAuthorization()
+            self.manager.requestAlwaysAuthorization()
         }
         self.trackingInterval = SharedPrefsUtil.trackingInterval()
         self.distanceFilter = SharedPrefsUtil.distanceFilter()
         CustomLogger.log(message: "Starting location updates")
+        self.manager.startMonitoringSignificantLocationChanges()
+      
         Task() {
             do {
                 self.updatesStarted = true
@@ -100,6 +102,7 @@ import CoreLocation
         CustomLogger.log(message: "handle LocationsHandler.stopLocationUpdates")
         self.updatesStarted = false
         self.backgroundActivity = false
+        self.manager.stopMonitoringSignificantLocationChanges()
     }
   
     private func filterLocations(update: CLLocation) -> Bool {
